@@ -1,0 +1,57 @@
+// 文档源配置
+export const docSources = [
+    {
+        name: "taro",
+        url: "https://docs.taro.zone/docs",
+        includePatterns: [
+        ],
+        excludePatterns: [
+            /\d\.x/,
+            /apis/
+        ]
+    },
+    {
+        name: "laravel",
+        url: "https://laravel.com/docs/12.x",
+        includePatterns: [
+            "/12.x/"
+        ],
+        excludePatterns: []
+    },
+    {
+        name: "taroify",
+        url: "https://taroify.github.io/taroify.com/introduce/",
+        includePatterns: [
+            "/components/",
+            "/components/*/",
+            "/components/*/*/"
+        ],
+        excludePatterns: []
+    },
+    {
+        name: "jquery",
+        url: "https://www.jquery123.com/",
+        includePatterns: [],
+        excludePatterns: [
+            /version/
+        ]
+    }
+];
+
+// 爬虫配置
+export const crawlerConfig = {
+    // 并行抓取的线程数
+    maxConcurrency: 40,
+    // 页面加载超时时间(毫秒)
+    pageLoadTimeout: 30000,
+    // 内容加载超时时间(毫秒)
+    contentLoadTimeout: 5000,
+    // 是否显示浏览器窗口
+    headless: false,
+    // 重试次数
+    maxRetries: 3,
+    // 重试间隔(毫秒)
+    retryDelay: 2000,
+    // 请求间隔(毫秒)
+    requestDelay: 1000
+};
