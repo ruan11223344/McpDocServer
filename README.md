@@ -1,5 +1,7 @@
 # McpDocServer
 
+[English Documentation](README_EN.md)
+
 一个基于MCP协议的开发文档服务器，专为各类开发框架文档设计。提供文档多线程爬取、本地文档加载、关键词搜索和文档详情获取功能。
 
 ## 核心功能演示
