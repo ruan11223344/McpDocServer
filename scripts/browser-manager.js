@@ -72,16 +72,67 @@ export class BrowserManager {
             // 设置用户代理
             await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
             
-            // 禁用图片加载
-            await page.setRequestInterception(true);
-            page.on('request', request => {
-                const resourceType = request.resourceType();
-                if (resourceType === 'image') {
-                    request.abort();
-                } else {
-                    request.continue();
+            // 禁用图片加载，优化请求拦截
+            try {
+                // 设置请求拦截前确保没有监听器
+                page.removeAllListeners('request');
+                
+                // 启用请求拦截
+                await page.setRequestInterception(true);
+                
+                // 添加请求处理器
+                const requestHandler = request => {
+                    try {
+                        const resourceType = request.resourceType();
+                        if (resourceType === 'image') {
+                            request.abort().catch(err => {
+                                console.log(`[请求] 终止图片请求失败: ${err.message}`);
+                                // 不做进一步处理，因为如果拦截失败，这个请求会自动通过
+                            });
+                        } else {
+                            request.continue().catch(err => {
+                                // 如果continue失败，尝试其他方法处理请求
+                                if (err.message && err.message.includes('Request Interception is not enabled')) {
+                                    console.log(`[请求] 拦截未启用，忽略错误: ${request.url().slice(0, 30)}...`);
+                                    // 不尝试abort，因为拦截未启用时这也会失败
+                                    return;
+                                }
+                                
+                                console.log(`[请求] 继续请求失败: ${err.message}, URL: ${request.url().slice(0, 30)}...`);
+                                
+                                try {
+                                    request.abort().catch(() => {
+                                        // 不做任何处理，最终让请求自行完成
+                                    });
+                                } catch (abortErr) {
+                                    // 忽略错误
+                                }
+                            });
+                        }
+                    } catch (error) {
+                        console.log(`[请求] 处理请求时出错: ${error.message}`);
+                        // 不尝试继续处理，让请求自行完成
+                    }
+                };
+                
+                // 添加请求监听器
+                page.on('request', requestHandler);
+                
+                // 在页面中设置标记，表示拦截已启用
+                await page.evaluate(() => {
+                    window._puppeteer_request_interception = true;
+                });
+                
+                console.log(`[请求] 已成功设置请求拦截`);
+            } catch (error) {
+                console.log(`[请求] 设置请求拦截时出错: ${error.message}`);
+                // 出错时尝试关闭拦截
+                try {
+                    await page.setRequestInterception(false);
+                } catch (e) {
+                    // 忽略错误
                 }
-            });
+            }
             
             // 导航到页面并等待加载
             await page.goto(url, {

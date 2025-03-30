@@ -657,3 +657,82 @@ server.tool(
     }
   }
 );
+
+// 文档列表查询工具
+server.tool(
+  "list_docs",
+  { 
+    limit: z.number().optional().default(50).describe("最大返回文档源数量")
+  },
+  async ({ limit }) => {
+    log(`收到文档列表请求: 限制=${limit}`);
+    
+    try {
+      // 确保文档已加载
+      if (Object.keys(docData).length === 0) {
+        log(`文档数据为空，尝试加载...`);
+        const loadResult = await ensureDocsLoaded();
+        if (!loadResult || Object.keys(docData).length === 0) {
+          return {
+            content: [{
+              type: "text",
+              text: JSON.stringify({ 
+                error: "文档数据不可用",
+                message: "无法加载文档数据"
+              }, null, 2)
+            }]
+          };
+        }
+      }
+      
+      // 获取所有文档源的摘要信息
+      const docSources = Object.entries(docData)
+        .map(([sourceName, data]) => {
+          const pageCount = data.pages ? Object.keys(data.pages).length : 0;
+          // 获取前5个页面作为示例
+          const samplePages = data.pages ? 
+            Object.entries(data.pages)
+              .slice(0, 5)
+              .map(([id, page]) => ({
+                id,
+                title: page.title || id
+              })) : 
+            [];
+          
+          return {
+            name: sourceName,
+            displayName: data.source?.name || sourceName,
+            url: data.source?.url || "",
+            lastUpdated: data.lastUpdated || "",
+            pageCount: pageCount,
+            samplePages: samplePages
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .slice(0, limit);
+      
+      // 返回文档源列表
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            success: true,
+            count: docSources.length,
+            sources: docSources
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      log(`获取文档列表时发生错误: ${error.message}`);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({ 
+            error: "获取文档列表时发生错误", 
+            details: error.message
+          }, null, 2)
+        }]
+      };
+    }
+  }
+);
