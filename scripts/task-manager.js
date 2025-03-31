@@ -1324,6 +1324,8 @@ export class TaskManager {
                                     // 谨慎处理注释，避免删除有用的文档注释
                                     .replace(/\/\*(?!\s*example)[\s\S]*?\*\//g, '')
                                     .replace(/(?<!example|demo|snippet)[\s\n]*\/\/(?!\s*example).*\n/g, '\n')
+                                    .replace(/<path[^>]*d=\\?"[^"]*\\?"[^>]*>/g, '') // 移除SVG路径数据
+                                    .replace(/d=\\?"[mMlLhHvVcCsSqQtTaAzZ0-9\s,.-]+\\?"/g, '') // 移除SVG路径描述数据
                                     .trim();
                                 
                                 // 确保title也是安全的
@@ -1778,6 +1780,8 @@ export class TaskManager {
                             .replace(/export\s+.*;/g, '') // 移除export语句
                             .replace(/\/\*[\s\S]*?\*\//g, '') // 移除注释块
                             .replace(/\/\/.*\n/g, '\n') // 移除行注释
+                            .replace(/<path[^>]*d=\\?"[^"]*\\?"[^>]*>/g, '') // 移除SVG路径数据
+                            .replace(/d=\\?"[mMlLhHvVcCsSqQtTaAzZ0-9\s,.-]+\\?"/g, '') // 移除SVG路径描述数据
                             .trim();
                             
                         if (filteredText) {
@@ -1922,6 +1926,8 @@ export class TaskManager {
                                 .replace(/export\s+.*;/g, '') // 移除export语句
                                 .replace(/\/\*[\s\S]*?\*\//g, '') // 移除注释块
                                 .replace(/\/\/.*\n/g, '\n') // 移除行注释
+                                .replace(/<path[^>]*d=\\?"[^"]*\\?"[^>]*>/g, '') // 移除SVG路径数据
+                                .replace(/d=\\?"[mMlLhHvVcCsSqQtTaAzZ0-9\s,.-]+\\?"/g, '') // 移除SVG路径描述数据
                                 .trim();
                                 
                             if (filteredText) {
