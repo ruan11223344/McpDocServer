@@ -18,9 +18,9 @@ const docData = {};
 let docsLoaded = false;
 let isLoadingDocs = false;
 
-// 创建MCP服务器
+// 创建MCP服务器 - 修改服务器名称，确保一致性
 const server = new McpServer({
-  name: "文档 MCP 服务器",
+  name: "docs_mcp_server", // 简化名称，避免空格和特殊字符
   version: "1.0.0"
 });
 
@@ -353,7 +353,7 @@ async function loadDocsFromDir(docsDir) {
     console.error('\n=== 用于 Cursor 配置的 mcp.json ===\n');
     console.error(JSON.stringify({
       mcpServers: {
-        "文档 MCP 服务器": {
+        "docs_mcp_server": { // 确保这里的名称与创建时一致
           command: "node",
           args: [process.argv[1]],
           env: { "NODE_ENV": "development" }
@@ -383,10 +383,9 @@ async function loadDocsFromDir(docsDir) {
   }
 })();
 
-// 文档搜索工具
-// 文档搜索工具
+// 文档搜索工具 - 修改名称确保一致性
 server.tool(
-  "search_docs",
+  "docs_search_docs", // 修改工具名称，添加命名空间前缀
   {
     query: z.string().describe("搜索关键词"),
     source: z.string().optional().describe("文档源名称（可选）"),
@@ -403,7 +402,7 @@ server.tool(
       if (query.toLowerCase() === "reload") {
         log("收到重新加载文档指令");
         docsLoaded = false;
-        Object.keys(docData).forEach(key => delete docData.key);
+        Object.keys(docData).forEach(key => delete docData[key]); // 修复: 使用docData[key]而不是docData.key
         const loadResult = await ensureDocsLoaded();
         return {
           content: [{
@@ -427,7 +426,16 @@ server.tool(
 
         if (!loadResult || Object.keys(docData).length === 0) {
           log(`重新加载后文档仍然不可用`);
-          // ... (保留原有的示例数据加载逻辑) ...
+          // 添加示例数据以便于调试
+          docData['example'] = {
+            source: { name: 'Example Docs' },
+            lastUpdated: new Date().toISOString(),
+            pages: {
+              'example-1': { title: '示例文档1', content: '这是一个示例文档内容，用于测试搜索功能。' },
+              'example-2': { title: '示例文档2', content: '这是另一个示例文档，包含一些测试关键词。' }
+            }
+          };
+          log(`已添加示例数据用于测试`);
         }
       }
 
@@ -435,7 +443,7 @@ server.tool(
       let docs = {};
       if (source) {
         const sourceLower = source.toLowerCase();
-        if (!docData.hasOwnProperty(sourceLower) || !docData.pages) { // 修改了这里的判断
+        if (!docData.hasOwnProperty(sourceLower)) {
           return {
             content: [{
               type: "text",
@@ -450,12 +458,19 @@ server.tool(
             }]
           };
         }
-        docs = docData.hasOwnProperty(sourceLower) ? docData.pages : {}; // 修改了这里的赋值
+        
+        // 确保安全获取pages
+        if (docData[sourceLower] && docData[sourceLower].pages) {
+          docs = docData[sourceLower].pages;
+        } else {
+          docs = {}; // 如果没有pages，使用空对象
+        }
       } else {
+        // 从所有源获取文档
         Object.entries(docData).forEach(([name, data]) => {
           if (data && data.pages) {
             Object.entries(data.pages).forEach(([id, page]) => {
-              docs = { ...docs, [id]: { ...page, source: name } }; // 更安全地合并
+              docs[id] = { ...page, source: name };
             });
           }
         });
@@ -542,9 +557,9 @@ server.tool(
   }
 );
 
-// 文档详情查询工具
+// 文档详情查询工具 - 修改名称确保一致性
 server.tool(
-  "get_doc_detail",
+  "docs_get_doc_detail", // 修改工具名称，添加命名空间前缀
   { 
     id: z.string().describe("文档ID"),
     source: z.string().optional().describe("文档源名称（如不提供，将搜索所有源）")
@@ -658,9 +673,9 @@ server.tool(
   }
 );
 
-// 文档列表查询工具
+// 文档列表查询工具 - 修改名称确保一致性
 server.tool(
-  "list_docs",
+  "docs_list_docs", // 修改工具名称，添加命名空间前缀
   { 
     limit: z.number().optional().default(50).describe("最大返回文档源数量")
   },
@@ -727,7 +742,7 @@ server.tool(
       return {
         content: [{
           type: "text",
-          text: JSON.stringify({ 
+          text: JSON.stringify({
             error: "获取文档列表时发生错误", 
             details: error.message
           }, null, 2)
